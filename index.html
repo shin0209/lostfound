@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="遺失物管理">
+<meta name="theme-color" content="#0d1f3c">
+<title>プラザオーサカ 遺失物管理システム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d1f3c;--paper:#f0f4f9;--cream:#e4eaf3;--blue:#1a4b8c;--blue-mid:#2563b0;
+  --blue-light:#4a8fd4;--blue-pale:#ddeaf8;--blue-ultra:#eef4fc;
+  --navy:#0d1f3c;--muted:#5a6e8a;--border:#b8cce0;--shadow:rgba(13,31,60,0.12);
+  --success:#1a7a59;--danger:#b02020;--warn:#7a5c1e;--white:#ffffff;
+  --expire-red:#b02020;--expire-red-bg:rgba(176,32,32,0.07);--expire-red-border:rgba(176,32,32,0.25);
+  --expire-orange:#c05c00;--expire-orange-bg:rgba(192,92,0,0.08);--expire-orange-border:rgba(192,92,0,0.3);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;min-height:-webkit-fill-available;}
+
+/* ── HEADER ── */
+header{background:linear-gradient(135deg,#0d1f3c 0%,#1a4b8c 60%,#2563b0 100%);color:var(--white);position:sticky;top:0;z-index:50;}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4a8fd4,#a0c8f0,#4a8fd4);}
+.header-inner{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.logo{display:flex;align-items:center;gap:10px;min-width:0;}
+.logo-icon{width:38px;height:38px;border:1.5px solid rgba(160,200,240,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(255,255,255,0.08);flex-shrink:0;}
+.logo-text{min-width:0;}
+.logo-text h1{font-family:'Noto Serif JP',serif;font-weight:600;font-size:13px;letter-spacing:0.06em;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.logo-text p{font-size:9px;letter-spacing:0.15em;color:rgba(160,200,240,0.8);font-weight:300;text-transform:uppercase;margin-top:1px;}
+.btn-new{background:var(--blue-light);color:var(--white);border:none;padding:9px 14px;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border-radius:3px;}
+.btn-new:active{background:#5fa0e0;}
+
+/* ── STATS BAR ── */
+.stats-bar{background:rgba(0,0,0,0.2);padding:8px 16px;display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.stats-bar::-webkit-scrollbar{display:none;}
+.stat-item{font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:0.04em;padding:0 14px;border-right:1px solid rgba(255,255,255,0.15);white-space:nowrap;flex-shrink:0;}
+.stat-item:first-child{padding-left:0;}
+.stat-item:last-child{border-right:none;}
+.stat-item strong{color:#a0c8f0;font-size:15px;margin-right:3px;}
+.stat-item.warn strong{color:#fbbf24;}
+
+/* ── ALERT BANNER ── */
+.alert-banner{padding:0 12px;}
+.alert-banner-inner{margin-top:12px;background:var(--expire-red-bg);border:1px solid var(--expire-red-border);padding:12px 14px;display:flex;align-items:flex-start;gap:10px;}
+.alert-banner-inner.warn{background:var(--expire-orange-bg);border-color:var(--expire-orange-border);}
+.alert-banner-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.alert-banner-text{flex:1;min-width:0;}
+.alert-banner-text strong{font-size:12px;color:var(--expire-red);display:block;margin-bottom:2px;line-height:1.4;}
+.alert-banner-inner.warn .alert-banner-text strong{color:var(--expire-orange);}
+.alert-banner-text span{font-size:11px;color:var(--muted);}
+.alert-banner-btn{background:none;border:1px solid var(--expire-red-border);padding:5px 10px;font-family:'Noto Sans JP',sans-serif;font-size:11px;color:var(--expire-red);cursor:pointer;white-space:nowrap;flex-shrink:0;align-self:center;}
+.alert-banner-inner.warn .alert-banner-btn{border-color:var(--expire-orange-border);color:var(--expire-orange);}
+
+/* ── MAIN ── */
+main{padding:12px 12px 100px;}
+
+/* ── FILTER CHIPS ── */
+.filter-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:2px;}
+.filter-scroll::-webkit-scrollbar{display:none;}
+.filter-chips{display:flex;gap:6px;width:max-content;padding:2px 0;}
+.chip{padding:6px 14px;border:1px solid var(--border);background:var(--white);color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;border-radius:20px;white-space:nowrap;transition:all 0.15s;}
+.chip.active{background:var(--blue);color:var(--white);border-color:var(--blue);}
+.chip.danger-chip{border-color:var(--expire-red-border);color:var(--expire-red);}
+.chip.danger-chip.active{background:var(--expire-red);border-color:var(--expire-red);color:white;}
+.chip.warn-chip{border-color:var(--expire-orange-border);color:var(--expire-orange);}
+.chip.warn-chip.active{background:var(--expire-orange);border-color:var(--expire-orange);color:white;}
+
+/* ── SEARCH ── */
+.search-wrap{margin-bottom:14px;}
+.search-inner{display:flex;align-items:center;border:1px solid var(--border);background:var(--white);padding:10px 14px;gap:8px;border-radius:4px;}
+.search-inner input{border:none;outline:none;font-family:'Noto Sans JP',sans-serif;font-size:14px;color:var(--ink);background:transparent;width:100%;}
+.search-inner input::placeholder{color:var(--border);}
+
+/* ── CARD LIST ── */
+.card-list{display:flex;flex-direction:column;gap:10px;}
+.item-card{background:var(--white);border:1px solid var(--border);padding:14px;border-radius:4px;cursor:pointer;transition:all 0.15s;box-shadow:0 2px 8px var(--shadow);position:relative;}
+.item-card:active{background:var(--blue-ultra);}
+.item-card.card-expired{border-left:4px solid var(--expire-red);background:var(--expire-red-bg);}
+.item-card.card-warning{border-left:4px solid var(--expire-orange);background:var(--expire-orange-bg);}
+.card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.card-photo{width:52px;height:52px;object-fit:cover;border:1px solid var(--border);border-radius:3px;flex-shrink:0;}
+.card-no-photo{width:52px;height:52px;background:var(--cream);border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--border);flex-shrink:0;}
+.card-main{flex:1;min-width:0;}
+.card-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;}
+.card-badges{display:flex;gap:5px;flex-wrap:wrap;}
+.card-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--muted);margin-bottom:10px;}
+.card-meta-item{display:flex;flex-direction:column;gap:1px;}
+.card-meta-label{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--border);}
+.card-meta-val{font-size:12px;color:var(--ink);font-weight:500;}
+.card-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.card-actions{display:flex;gap:6px;}
+.card-action-btn{background:none;border:1px solid var(--border);padding:6px 14px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--muted);cursor:pointer;border-radius:3px;}
+.card-action-btn:active{background:var(--blue-ultra);border-color:var(--blue-light);}
+.card-del-btn{background:none;border:1px solid rgba(176,32,32,0.3);padding:6px 14px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--danger);cursor:pointer;border-radius:3px;}
+.card-del-btn:active{background:var(--expire-red-bg);}
+
+/* ── BADGES ── */
+.category-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:11px;font-weight:500;border-radius:10px;}
+.cat-stay   {background:rgba(26,75,140,0.1);color:var(--blue);border:1px solid rgba(26,75,140,0.25);}
+.cat-rest   {background:rgba(37,99,176,0.1);color:var(--blue-mid);border:1px solid rgba(37,99,176,0.25);}
+.cat-banquet{background:rgba(74,143,212,0.12);color:#2a6aaa;border:1px solid rgba(74,143,212,0.3);}
+.cat-other  {background:rgba(90,110,138,0.1);color:var(--muted);border:1px solid var(--border);}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:11px;font-weight:700;border-radius:10px;}
+.status-pending {background:rgba(176,32,32,0.09);color:var(--danger);}
+.status-contact {background:rgba(26,107,191,0.12);color:var(--blue-mid);}
+.status-returned{background:rgba(26,122,89,0.1);color:var(--success);}
+.status-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.expiry-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:11px;font-weight:700;border-radius:10px;white-space:nowrap;}
+.expiry-ok     {background:rgba(26,122,89,0.08);color:var(--success);}
+.expiry-warning{background:var(--expire-orange-bg);color:var(--expire-orange);border:1px solid var(--expire-orange-border);}
+.expiry-expired{background:var(--expire-red-bg);color:var(--expire-red);border:1px solid var(--expire-red-border);animation:pulse 2s infinite;}
+.expiry-done   {background:rgba(90,110,138,0.08);color:var(--muted);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(24px + var(--safe-bottom));right:20px;width:56px;height:56px;background:var(--blue);border:none;border-radius:50%;color:white;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(26,75,140,0.45);z-index:40;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.fab:active{background:var(--blue-mid);transform:scale(0.95);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(13,31,60,0.6);z-index:100;backdrop-filter:blur(3px);align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);width:100%;max-width:600px;border-radius:16px 16px 0 0;border-top:3px solid var(--blue-light);box-shadow:0 -8px 40px rgba(13,31,60,0.3);animation:slideUp 0.3s ease;max-height:92vh;display:flex;flex-direction:column;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-drag{width:40px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0;}
+.modal-header{background:linear-gradient(135deg,var(--navy),var(--blue));color:var(--white);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-header h2{font-family:'Noto Serif JP',serif;font-size:15px;font-weight:400;letter-spacing:0.08em;}
+.modal-close{background:none;border:none;color:var(--white);font-size:20px;cursor:pointer;opacity:0.7;line-height:1;padding:4px;}
+.modal-body{padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;}
+.modal-footer{padding:16px 20px;background:var(--paper);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-shrink:0;padding-bottom:calc(16px + var(--safe-bottom));}
+.modal-footer-right{display:flex;gap:8px;}
+
+/* ── FORM ── */
+.form-section{margin-bottom:20px;}
+.form-section-title{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--blue-pale);}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-group label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);font-weight:500;}
+.form-group label span{color:var(--danger);}
+.form-group input,.form-group select,.form-group textarea{border:1px solid var(--border);padding:12px 14px;font-family:'Noto Sans JP',sans-serif;font-size:16px;color:var(--ink);background:var(--white);outline:none;-webkit-appearance:none;border-radius:4px;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--blue-light);box-shadow:0 0 0 3px rgba(74,143,212,0.12);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.category-options{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.cat-option{position:relative;}
+.cat-option input[type=radio]{position:absolute;opacity:0;width:0;height:0;}
+.cat-option label{display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;transition:all 0.15s;font-size:13px;color:var(--muted);border-radius:4px;}
+.cat-option label .icon{font-size:18px;}
+.cat-option input:checked+label{border-color:var(--blue-light);background:var(--blue-pale);color:var(--blue);}
+.photo-upload{border:1.5px dashed var(--border);padding:16px;text-align:center;background:var(--paper);cursor:pointer;border-radius:4px;}
+.photo-upload input{display:none;}
+.photo-upload-label{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;}
+.photo-upload .icon{font-size:24px;color:var(--border);}
+.photo-upload p{font-size:12px;color:var(--muted);}
+.photo-preview-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+
+/* ── DETAIL ── */
+.detail-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--cream);}
+.detail-section:last-child{border-bottom:none;}
+.detail-section-title{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:10px;}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px;}
+.detail-row dt{font-size:11px;color:var(--muted);flex-shrink:0;padding-top:2px;}
+.detail-row dd{font-size:13px;color:var(--ink);font-weight:500;text-align:right;}
+.expiry-bar-wrap{margin-top:8px;}
+.expiry-detail-bar{height:8px;background:var(--cream);border-radius:4px;overflow:hidden;margin-bottom:4px;}
+.expiry-detail-fill{height:100%;border-radius:4px;}
+.expiry-bar-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
+.status-btns{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.status-btn{width:100%;padding:12px;border:1.5px solid var(--border);background:white;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;font-weight:500;border-radius:4px;transition:all 0.15s;}
+.status-btn:active{opacity:0.8;}
+.status-btn.active-pending {border-color:var(--danger);background:rgba(176,32,32,0.07);color:var(--danger);}
+.status-btn.active-contact {border-color:var(--blue-mid);background:rgba(26,107,191,0.08);color:var(--blue-mid);}
+.status-btn.active-returned{border-color:var(--success);background:rgba(26,122,89,0.07);color:var(--success);}
+.photos-row{display:flex;gap:8px;flex-wrap:wrap;}
+.photos-row img{width:72px;height:72px;object-fit:cover;border:1px solid var(--border);border-radius:3px;cursor:pointer;}
+
+/* ── BUTTONS ── */
+.btn-cancel{background:none;border:1px solid var(--border);padding:11px 18px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;border-radius:4px;}
+.btn-save{background:var(--blue);border:none;padding:11px 22px;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;color:var(--white);cursor:pointer;border-radius:4px;}
+.btn-save:active{background:var(--blue-mid);}
+.btn-delete{background:none;border:1px solid rgba(176,32,32,0.4);padding:11px 16px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--danger);cursor:pointer;border-radius:4px;}
+.btn-delete:active{background:var(--expire-red-bg);}
+
+/* ── CONFIRM ── */
+.confirm-modal{border-radius:16px 16px 0 0;}
+.confirm-body{padding:28px 20px;text-align:center;}
+.confirm-icon{font-size:44px;margin-bottom:12px;}
+.confirm-body h3{font-family:'Noto Serif JP',serif;font-size:18px;margin-bottom:8px;}
+.confirm-body p{font-size:13px;color:var(--muted);line-height:1.7;}
+.confirm-body .item-name{font-weight:700;color:var(--ink);}
+.confirm-footer{padding:16px 20px;background:var(--paper);border-top:1px solid var(--border);display:flex;gap:10px;padding-bottom:calc(16px + var(--safe-bottom));}
+.btn-confirm-delete{flex:1;background:var(--danger);border:none;padding:13px;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;color:white;cursor:pointer;border-radius:4px;}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state .big-icon{font-size:48px;margin-bottom:16px;opacity:0.3;}
+.empty-state p{font-size:14px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(90px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:var(--white);padding:12px 20px;font-size:13px;z-index:999;border-radius:24px;box-shadow:0 4px 20px rgba(13,31,60,0.35);opacity:0;transition:all 0.3s;white-space:nowrap;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.danger{background:var(--danger);}
+.toast.success{background:var(--success);}
+
+/* ── PC OVERRIDE ── */
+@media(min-width:768px){
+  .modal-overlay{align-items:flex-start;padding:40px 20px;}
+  .modal{border-radius:4px;border-top:3px solid var(--blue-light);max-height:85vh;animation:slideIn 0.25s ease;}
+  @keyframes slideIn{from{transform:translateY(-20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .modal-drag{display:none;}
+  main{padding:20px 24px 40px;}
+  .fab{display:none;}
+  header .btn-new{display:flex;}
+  .card-list{display:grid;grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:767px){
+  header .btn-new{display:none;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🗝</div>
+      <div class="logo-text">
+        <h1>プラザオーサカ　遺失物管理システム</h1>
+        <p>Plaza Osaka — Lost &amp; Found</p>
+      </div>
+    </div>
+    <button class="btn-new" onclick="openNewModal()">＋ 新規登録</button>
+  </div>
+  <div class="stats-bar" id="statsBar"></div>
+</header>
+
+<div class="alert-banner" id="alertBanner"></div>
+
+<main>
+  <!-- FILTER CHIPS -->
+  <div class="filter-scroll">
+    <div class="filter-chips">
+      <button class="chip active" onclick="setFilter('all',this)">すべて</button>
+      <button class="chip" onclick="setFilter('宿泊',this)">🛏 宿泊</button>
+      <button class="chip" onclick="setFilter('レストラン',this)">🍽 レストラン</button>
+      <button class="chip" onclick="setFilter('宴会',this)">🥂 宴会</button>
+      <button class="chip" onclick="setFilter('その他',this)">📦 その他</button>
+      <button class="chip" onclick="setFilter('__pending__',this)">⚠ 未返却</button>
+      <button class="chip danger-chip" onclick="setFilter('__expired__',this)" id="expiredChip">🚨 期限超過</button>
+      <button class="chip warn-chip" onclick="setFilter('__warning__',this)" id="warningChip">⏰ 期限間近</button>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <div class="search-inner">
+      <span>🔍</span>
+      <input type="search" placeholder="物品名・場所・担当者で検索..." oninput="setSearch(this.value)">
+    </div>
+  </div>
+
+  <!-- CARD LIST -->
+  <div class="card-list" id="cardList"></div>
+  <div id="emptyState" class="empty-state" style="display:none">
+    <div class="big-icon">🎒</div>
+    <p>該当する遺失物はありません</p>
+  </div>
+</main>
+
+<!-- FAB (mobile only) -->
+<button class="fab" onclick="openNewModal()">＋</button>
+
+<!-- FORM MODAL -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <h2 id="modalTitle">遺失物 新規登録</h2>
+      <button class="modal-close" onclick="closeModal('formModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">利用区分 *</div>
+        <div class="category-options">
+          <div class="cat-option"><input type="radio" name="category" id="cat1" value="宿泊" checked><label for="cat1"><span class="icon">🛏</span>宿泊利用者</label></div>
+          <div class="cat-option"><input type="radio" name="category" id="cat2" value="レストラン"><label for="cat2"><span class="icon">🍽</span>レストラン</label></div>
+          <div class="cat-option"><input type="radio" name="category" id="cat3" value="宴会"><label for="cat3"><span class="icon">🥂</span>宴会利用者</label></div>
+          <div class="cat-option"><input type="radio" name="category" id="cat4" value="その他"><label for="cat4"><span class="icon">📦</span>その他</label></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">基本情報</div>
+        <div class="form-group"><label>物品名 <span>*</span></label><input type="text" id="f_item" placeholder="例：黒い財布、スマートフォン"></div>
+        <div class="form-group"><label>習得場所 <span>*</span></label><input type="text" id="f_place" placeholder="例：2F レストラン、305号室"></div>
+        <div class="form-group"><label>習得日時 <span>*</span></label><input type="datetime-local" id="f_datetime"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">担当者情報</div>
+        <div class="form-group"><label>担当部署</label>
+          <select id="f_dept"><option>フロント</option><option>客室</option><option>レストラン</option><option>宴会</option><option>ベル・コンシェルジュ</option><option>セキュリティ</option><option>その他</option></select>
+        </div>
+        <div class="form-group"><label>担当者名</label><input type="text" id="f_staff" placeholder="例：山田 太郎"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">その他</div>
+        <div class="form-group"><label>備考</label><textarea id="f_note" placeholder="特記事項、ゲストの連絡先など"></textarea></div>
+        <div class="form-group">
+          <label>写真</label>
+          <div class="photo-upload"><input type="file" id="f_photos" multiple accept="image/*" onchange="previewPhotos(this)"><label for="f_photos" class="photo-upload-label"><span class="icon">📷</span><p>タップして写真を追加</p></label></div>
+          <div class="photo-preview-grid" id="photoPreview"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div id="editDeleteBtn" style="display:none"><button class="btn-delete" onclick="requestDelete()">🗑 削除</button></div>
+      <div class="modal-footer-right">
+        <button class="btn-cancel" onclick="closeModal('formModal')">キャンセル</button>
+        <button class="btn-save" id="btnSave" onclick="saveItem()">登録する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <h2 id="detailTitle">遺失物 詳細</h2>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn-delete" onclick="requestDelete()">🗑 削除</button>
+      <div class="modal-footer-right">
+        <button class="btn-cancel" onclick="openEditModal()">編集</button>
+        <button class="btn-save" onclick="closeModal('detailModal')">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal confirm-modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header"><h2>削除の確認</h2><button class="modal-close" onclick="closeModal('confirmModal')">✕</button></div>
+    <div class="confirm-body">
+      <div class="confirm-icon">🗑️</div>
+      <h3>この記録を削除しますか？</h3>
+      <p id="confirmText"></p>
+    </div>
+    <div class="confirm-footer">
+      <button class="btn-cancel" onclick="closeModal('confirmModal')" style="flex:1">キャンセル</button>
+      <button class="btn-confirm-delete" onclick="confirmDelete()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const EXPIRE_DAYS=30, WARNING_DAYS=7;
+let items=[],filterCat='all',searchQ='',editId=null,viewId=null,deleteTargetId=null,photoDataUrls=[];
+const CAT_ICON={'宿泊':'🛏','レストラン':'🍽','宴会':'🥂','その他':'📦'};
+const CAT_CLASS={'宿泊':'cat-stay','レストラン':'cat-rest','宴会':'cat-banquet','その他':'cat-other'};
+const STATUS_LABELS={'pending':'未返却','contact':'連絡済み','returned':'返却完了'};
+const STATUS_CLASS={'pending':'status-pending','contact':'status-contact','returned':'status-returned'};
+
+function getDaysElapsed(dt){return Math.floor((new Date()-new Date(dt))/(1000*60*60*24));}
+function getExpiryInfo(item){
+  if(item.status==='returned')return{type:'done',label:'返却済',days:0,remaining:0};
+  const e=getDaysElapsed(item.datetime),r=EXPIRE_DAYS-e;
+  if(r<=0)return{type:'expired',label:`超過${Math.abs(r)}日`,days:e,remaining:r};
+  if(r<=WARNING_DAYS)return{type:'warning',label:`残り${r}日`,days:e,remaining:r};
+  return{type:'ok',label:`残り${r}日`,days:e,remaining:r};
+}
+function expiryBadge(item){
+  const e=getExpiryInfo(item);
+  const cls={ok:'expiry-ok',warning:'expiry-warning',expired:'expiry-expired',done:'expiry-done'};
+  const ic={ok:'🟢',warning:'⏰',expired:'🚨',done:'✅'};
+  return `<span class="expiry-badge ${cls[e.type]}">${ic[e.type]} ${e.label}</span>`;
+}
+
+function renderAlertBanner(){
+  const active=items.filter(i=>i.status!=='returned');
+  const expired=active.filter(i=>getExpiryInfo(i).type==='expired');
+  const warning=active.filter(i=>getExpiryInfo(i).type==='warning');
+  let html='';
+  if(expired.length){
+    const names=expired.slice(0,2).map(i=>i.item).join('、')+(expired.length>2?` 他${expired.length-2}件`:'');
+    html+=`<div class="alert-banner-inner"><span class="alert-banner-icon">🚨</span><div class="alert-banner-text"><strong>期限超過 ${expired.length}件</strong><span>${names}</span></div><button class="alert-banner-btn" onclick="setFilterById('__expired__')">表示</button></div>`;
+  }
+  if(warning.length){
+    const names=warning.slice(0,2).map(i=>i.item).join('、')+(warning.length>2?` 他${warning.length-2}件`:'');
+    html+=`<div class="alert-banner-inner warn" style="margin-top:${expired.length?'8px':'0'}"><span class="alert-banner-icon">⏰</span><div class="alert-banner-text"><strong>期限間近 ${warning.length}件</strong><span>${names}</span></div><button class="alert-banner-btn" onclick="setFilterById('__warning__')">表示</button></div>`;
+  }
+  document.getElementById('alertBanner').innerHTML=html;
+}
+
+function setFilterById(f){
+  document.querySelectorAll('.chip').forEach(t=>t.classList.remove('active'));
+  const m={'__expired__':'expiredChip','__warning__':'warningChip'};
+  if(m[f])document.getElementById(m[f]).classList.add('active');
+  filterCat=f;render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function updateStats(){
+  const total=items.length,pending=items.filter(i=>i.status==='pending').length;
+  const expired=items.filter(i=>i.status!=='returned'&&getExpiryInfo(i).type==='expired').length;
+  const returned=items.filter(i=>i.status==='returned').length;
+  document.getElementById('statsBar').innerHTML=
+    `<div class="stat-item"><strong>${total}</strong>件</div>`+
+    `<div class="stat-item"><strong>${pending}</strong>件未返却</div>`+
+    `<div class="stat-item"><strong>${returned}</strong>件返却済</div>`+
+    (expired?`<div class="stat-item warn"><strong>${expired}</strong>件期限超過</div>`:'');
+  renderAlertBanner();
+}
+
+function setFilter(f,btn){filterCat=f;document.querySelectorAll('.chip').forEach(t=>t.classList.remove('active'));btn.classList.add('active');render();}
+function setSearch(v){searchQ=v.toLowerCase();render();}
+
+function render(){
+  const list=document.getElementById('cardList');
+  let filtered=items.filter(i=>{
+    const exp=getExpiryInfo(i);
+    if(filterCat==='__pending__')return i.status==='pending';
+    if(filterCat==='__expired__')return exp.type==='expired';
+    if(filterCat==='__warning__')return exp.type==='warning';
+    if(filterCat!=='all'&&i.category!==filterCat)return false;
+    if(searchQ)return i.item.toLowerCase().includes(searchQ)||i.place.toLowerCase().includes(searchQ)||(i.staff&&i.staff.toLowerCase().includes(searchQ));
+    return true;
+  });
+  const empty=document.getElementById('emptyState');
+  if(!filtered.length){list.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  list.innerHTML=filtered.map(item=>{
+    const dt=new Date(item.datetime);
+    const dtStr=dt.toLocaleDateString('ja-JP',{month:'2-digit',day:'2-digit'})+' '+dt.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+    const thumb=(item.photos&&item.photos.length)
+      ?`<img class="card-photo" src="${item.photos[0]}">`
+      :`<div class="card-no-photo">📷</div>`;
+    const exp=getExpiryInfo(item);
+    const cardCls=exp.type==='expired'?'card-expired':exp.type==='warning'?'card-warning':'';
+    return `<div class="item-card ${cardCls}" onclick="openDetail('${item.id}')">
+      <div class="card-top">
+        ${thumb}
+        <div class="card-main">
+          <div class="card-title">${item.item}</div>
+          <div class="card-id">${item.id}</div>
+          <div class="card-badges">
+            <span class="category-badge ${CAT_CLASS[item.category]}">${CAT_ICON[item.category]} ${item.category}</span>
+            <span class="status-badge ${STATUS_CLASS[item.status]}"><span class="status-dot"></span>${STATUS_LABELS[item.status]}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-meta">
+        <div class="card-meta-item"><span class="card-meta-label">習得場所</span><span class="card-meta-val">${item.place}</span></div>
+        <div class="card-meta-item"><span class="card-meta-label">日時</span><span class="card-meta-val">${dtStr}</span></div>
+        <div class="card-meta-item"><span class="card-meta-label">担当者</span><span class="card-meta-val">${item.staff||'—'}</span></div>
+        <div class="card-meta-item"><span class="card-meta-label">保管期限</span><span class="card-meta-val">${expiryBadge(item)}</span></div>
+      </div>
+      <div class="card-bottom">
+        <div class="card-actions">
+          <button class="card-action-btn" onclick="event.stopPropagation();openDetail('${item.id}')">詳細</button>
+          <button class="card-del-btn" onclick="event.stopPropagation();viewId='${item.id}';requestDelete()">削除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDetail(id){
+  viewId=id;const item=items.find(i=>i.id===id);if(!item)return;
+  document.getElementById('detailTitle').textContent=item.item;
+  const dt=new Date(item.datetime);
+  const dtStr=dt.toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const expireDate=new Date(new Date(item.datetime).getTime()+EXPIRE_DAYS*24*60*60*1000);
+  const expireDateStr=expireDate.toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});
+  const exp=getExpiryInfo(item);
+  const pct=Math.min(100,Math.max(0,(exp.days/EXPIRE_DAYS)*100));
+  const barColor=exp.type==='expired'?'var(--expire-red)':exp.type==='warning'?'var(--expire-orange)':'var(--success)';
+  const photosHtml=(item.photos&&item.photos.length)
+    ?`<div class="photos-row">${item.photos.map(p=>`<img src="${p}">`).join('')}</div>`
+    :'<span style="color:var(--muted);font-size:12px">なし</span>';
+  document.getElementById('detailBody').innerHTML=`
+    <div class="detail-section">
+      <div class="detail-section-title">基本情報</div>
+      <div class="detail-row"><dt>管理番号</dt><dd style="font-family:'DM Mono',monospace;font-size:12px">${item.id}</dd></div>
+      <div class="detail-row"><dt>利用区分</dt><dd><span class="category-badge ${CAT_CLASS[item.category]}">${CAT_ICON[item.category]} ${item.category}</span></dd></div>
+      <div class="detail-row"><dt>物品名</dt><dd>${item.item}</dd></div>
+      <div class="detail-row"><dt>習得場所</dt><dd>${item.place}</dd></div>
+      <div class="detail-row"><dt>習得日時</dt><dd>${dtStr}</dd></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">担当者</div>
+      <div class="detail-row"><dt>担当部署</dt><dd>${item.dept||'—'}</dd></div>
+      <div class="detail-row"><dt>担当者名</dt><dd>${item.staff||'—'}</dd></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">保管期限</div>
+      ${expiryBadge(item)}
+      <span style="font-size:11px;color:var(--muted);margin-left:8px">期限：${expireDateStr}</span>
+      <div class="expiry-bar-wrap">
+        <div class="expiry-detail-bar"><div class="expiry-detail-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <div class="expiry-bar-labels"><span>登録日</span><span>${exp.days}日経過</span><span>${EXPIRE_DAYS}日</span></div>
+      </div>
+    </div>
+    ${item.note?`<div class="detail-section"><div class="detail-section-title">備考</div><p style="font-size:13px;line-height:1.7">${item.note}</p></div>`:''}
+    <div class="detail-section">
+      <div class="detail-section-title">写真</div>
+      ${photosHtml}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">返却状況</div>
+      <div class="status-btns">
+        <button class="status-btn ${item.status==='pending'?'active-pending':''}" onclick="setStatus('${id}','pending')">⚠ 未返却</button>
+        <button class="status-btn ${item.status==='contact'?'active-contact':''}" onclick="setStatus('${id}','contact')">📞 連絡済み</button>
+        <button class="status-btn ${item.status==='returned'?'active-returned':''}" onclick="setStatus('${id}','returned')">✓ 返却完了</button>
+      </div>
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function setStatus(id,status){const item=items.find(i=>i.id===id);if(!item)return;item.status=status;openDetail(id);render();updateStats();showToast(`✓ 「${STATUS_LABELS[status]}」に更新しました`);}
+
+function genId(){const d=new Date(),yy=String(d.getFullYear()).slice(2),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'),seq=String(items.length+1).padStart(3,'0');return `LF-${yy}${mm}${dd}-${seq}`;}
+
+function openNewModal(){
+  editId=null;
+  document.getElementById('modalTitle').textContent='遺失物 新規登録';
+  ['f_item','f_staff','f_note','f_place'].forEach(id=>document.getElementById(id).value='');
+  const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  document.getElementById('f_datetime').value=now.toISOString().slice(0,16);
+  document.getElementById('f_dept').value='フロント';
+  document.querySelectorAll('input[name=category]')[0].checked=true;
+  photoDataUrls=[];document.getElementById('photoPreview').innerHTML='';
+  document.getElementById('editDeleteBtn').style.display='none';
+  document.getElementById('btnSave').textContent='登録する';
+  document.getElementById('formModal').classList.add('open');
+}
+function openEditModal(){
+  closeModal('detailModal');
+  const item=items.find(i=>i.id===viewId);if(!item)return;
+  editId=item.id;
+  document.getElementById('modalTitle').textContent='遺失物 編集';
+  document.getElementById('f_item').value=item.item;
+  document.getElementById('f_place').value=item.place;
+  document.getElementById('f_datetime').value=item.datetime;
+  document.getElementById('f_dept').value=item.dept;
+  document.getElementById('f_staff').value=item.staff;
+  document.getElementById('f_note').value=item.note||'';
+  document.querySelectorAll('input[name=category]').forEach(r=>r.checked=r.value===item.category);
+  photoDataUrls=[...(item.photos||[])];renderPhotoPreview();
+  document.getElementById('editDeleteBtn').style.display='block';
+  document.getElementById('btnSave').textContent='更新する';
+  document.getElementById('formModal').classList.add('open');
+}
+function previewPhotos(input){Array.from(input.files).forEach(f=>{const r=new FileReader();r.onload=e=>{photoDataUrls.push(e.target.result);renderPhotoPreview();};r.readAsDataURL(f);});}
+function renderPhotoPreview(){document.getElementById('photoPreview').innerHTML=photoDataUrls.map((d,i)=>`<div style="position:relative"><img src="${d}" style="width:64px;height:64px;object-fit:cover;border:1px solid var(--border);border-radius:3px"><button onclick="removePhoto(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--danger);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:18px">✕</button></div>`).join('');}
+function removePhoto(i){photoDataUrls.splice(i,1);renderPhotoPreview();}
+
+function saveItem(){
+  const itemVal=document.getElementById('f_item').value.trim();
+  const place=document.getElementById('f_place').value.trim();
+  const dt=document.getElementById('f_datetime').value;
+  const category=document.querySelector('input[name=category]:checked').value;
+  if(!itemVal||!place||!dt){showToast('必須項目を入力してください',true);return;}
+  if(editId){
+    const idx=items.findIndex(i=>i.id===editId);
+    items[idx]={...items[idx],item:itemVal,place,datetime:dt,category,dept:document.getElementById('f_dept').value,staff:document.getElementById('f_staff').value.trim(),note:document.getElementById('f_note').value.trim(),photos:[...photoDataUrls]};
+    showToast('✓ 情報を更新しました');
+  }else{
+    items.unshift({id:genId(),category,item:itemVal,place,datetime:dt,dept:document.getElementById('f_dept').value,staff:document.getElementById('f_staff').value.trim(),note:document.getElementById('f_note').value.trim(),photos:[...photoDataUrls],status:'pending',createdAt:new Date().toISOString()});
+    showToast('✓ 遺失物を登録しました');
+  }
+  closeModal('formModal');render();updateStats();
+}
+
+function requestDelete(){
+  deleteTargetId=viewId||editId;
+  const item=items.find(i=>i.id===deleteTargetId);if(!item)return;
+  document.getElementById('confirmText').innerHTML=`<span class="item-name">「${item.item}」</span>（${item.id}）を削除します。この操作は元に戻せません。`;
+  closeModal('detailModal');closeModal('formModal');
+  document.getElementById('confirmModal').classList.add('open');
+}
+function confirmDelete(){
+  const idx=items.findIndex(i=>i.id===deleteTargetId);if(idx===-1)return;
+  const name=items[idx].item;items.splice(idx,1);
+  closeModal('confirmModal');deleteTargetId=null;viewId=null;editId=null;
+  render();updateStats();showToast(`🗑 「${name}」を削除しました`);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showToast(msg,isDanger=false){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast'+(isDanger?' danger':'');
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+const now=new Date();
+function daysAgo(d){const dt=new Date(now);dt.setDate(dt.getDate()-d);return dt.toISOString().slice(0,16);}
+items=[
+  {id:'LF-260317-001',category:'宿泊',  item:'黒い財布（COACH）',       place:'312号室',             datetime:daysAgo(32),dept:'客室',    staff:'田中 花子',note:'現金・カード入り', photos:[],status:'contact', createdAt:daysAgo(32)},
+  {id:'LF-260317-002',category:'レストラン',item:'iPhone 15（ゴールド）',place:'2F レストラン テーブル8',datetime:daysAgo(26),dept:'レストラン',staff:'佐藤 健',  note:'',             photos:[],status:'pending', createdAt:daysAgo(26)},
+  {id:'LF-260316-003',category:'宴会',  item:'忘れ傘（黒・折りたたみ）', place:'3F 鳳凰の間',          datetime:daysAgo(5), dept:'宴会',    staff:'鈴木 一郎',note:'',             photos:[],status:'returned',createdAt:daysAgo(5)},
+  {id:'LF-260316-004',category:'その他',item:'メガネ（ブラックフレーム）',place:'ロビー ソファ付近',     datetime:daysAgo(35),dept:'フロント',staff:'高橋 美咲',note:'',             photos:[],status:'pending', createdAt:daysAgo(35)},
+  {id:'LF-260315-005',category:'宿泊',  item:'充電器セット（Apple）',    place:'205号室',             datetime:daysAgo(10),dept:'客室',    staff:'山本 誠',  note:'チェックアウト後',photos:[],status:'contact', createdAt:daysAgo(10)},
+  {id:'LF-260314-006',category:'レストラン',item:'ネックレス（ゴールド）',place:'1F ラウンジ',          datetime:daysAgo(28),dept:'レストラン',staff:'中村 彩',  note:'',             photos:[],status:'pending', createdAt:daysAgo(28)},
+];
+render();updateStats();
+</script>
+</body>
+</html>
